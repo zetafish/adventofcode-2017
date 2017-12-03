@@ -1,25 +1,8 @@
 (ns advent.day2)
 
-
-(defn make-sheet
-  [numbers row-size]
-  (partition row-size numbers))
-
-(let [sheet [5 1 9 5
-             7 5 3
-             2 4 6 8]]
-     (partition 4 sheet))
-
-
-(defn checksum-row
+(defn checksum-1
   [c]
   (- (reduce max c) (reduce min c)))
-
-(defn checksum-spreadsheet
-  [sheet]
-  (->> sheet
-       (map checksum-row)
-       (reduce +)))
 
 (def input
   (partition 16 [515 912 619 2043  96  93  2242  1385  2110  860 2255  621 1480  118 1230  99
@@ -40,15 +23,36 @@
                  707 668 1778  1687  2073  1892  62  1139  908 78  1885  800 945 712 57  65])
   )
 
-(defn compute-1
-  [sheet]
+(defn compute
+  [checksum-fn sheet]
   (->> sheet
-       (map #(- (reduce max %) (reduce min %)))
+       (map checksum-fn)
        (reduce +)))
 
-(compute-1
-  [[5 1 9 5]
-   [7 5 3]
-   [2 4 6 8]])
+(compute
+  checksum-1 [[5 1 9 5]
+              [7 5 3]
+              [2 4 6 8]])
 
-(compute-1 input)
+(compute checksum-1 input)
+
+(defn all-pairs [coll]
+  (when-let [s (next coll)]
+    (lazy-cat (for [y s] [(first coll) y])
+              (all-pairs s))))
+
+(defn checksum-2
+  [c]
+  (->> (all-pairs c)
+       (map sort)
+       (filter (fn [[a b]] (zero? (rem b a))))
+       (first)
+       (reverse)
+       (apply /)))
+
+(compute checksum-2 [[5 9 2 8]
+                     [9 4 7 3]
+                     [ 3 8 6 5]])
+
+
+(compute checksum-2 input)

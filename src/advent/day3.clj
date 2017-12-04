@@ -1,6 +1,10 @@
-(ns advent.day3)
+(ns advent.day3
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]))
 
 ;; Day 3: Spiral Memory
+
+(def input 347991)
 
 (defn spiral
   [[x y]]
@@ -65,12 +69,17 @@
   [[x y]]
   (+ (Math/abs x) (Math/abs y)))
 
-;; part 1
 
-#_ (manhattan (locate 347991))
+(defn part1
+  [n]
+  (-> n locate manhattan))
 
-;; part 2
-#_ (->> (iterate fill {:world {} :xy [0 0] :value 1})
-        (drop-while #(< (:value %) 347991))
-        (first)
-        (:value))
+(defn part2
+  [n]
+  (->> (iterate fill {:world {} :xy [0 0] :value 1})
+       (drop-while #(< (:value %) n))
+       (first)
+       (:value)))
+
+#_ (part1 input)
+#_ (part2 input)

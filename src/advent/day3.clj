@@ -2,35 +2,75 @@
 
 ;; Day 3: Spiral Memory
 
-(def inc2 (partial + 2))
-(defn dec2 [n] (- n 2))
+(defn spiral
+  [[x y]]
+  (let [m (max (Math/abs x) (Math/abs y))]
+    (cond
 
-(defn square
-  [n]
-  (* n n))
+      ;; on the bottom
+      (= y (- m))
+      [(inc x) y]
 
-(defn ring
+      ;; on the right
+      (= x m)
+      (if (< y m)
+        [x (inc y)]  ;; go up if possible
+        [(dec x) y]  ;; go left if top reached
+        )
+
+      ;; on the top
+      (= y m)
+      (if (> x (- m))
+        [(dec x) y]  ;; go left if possible
+        [x (dec y)]  ;; go down if left reached
+        )
+
+      ;; on the left side
+      (= x (- m))
+      (if (> y (- m))
+        [x (dec y)]  ;; go down if possible
+        [(inc x) y]  ;; go right if bottom reached
+        ))))
+
+(def d
+  (->> (for [x [-1 0 1] y [-1 0 1]] [x y])
+       (remove #(= [0 0] %))))
+
+(defn neighbours
+  [[x y]]
+  (map (fn [[dx dy]] [(+ x dx) (+ y dy)]) d))
+
+(defn sum-neighbours
+  [world [x y]]
+  (->> (neighbours [x y])
+       (map world)
+       (filter identity)
+       (reduce +)))
+
+(defn fill
+  [{:keys [world xy value]}]
+  (let [xy' (spiral xy)
+        world' (assoc world xy value)]
+    {:world world'
+     :xy xy'
+     :value (sum-neighbours world' xy')}))
+
+(defn locate
   [n]
-  (->> (iterate inc2 1)
-       (drop-while #(< (* % %) n))
+  (->> (iterate spiral [0 0])
+       (drop (dec n))
        (first)))
 
-(defn position
-  [n]
-  (dec (- n (square (dec2 (ring n))))))
+(defn manhattan
+  [[x y]]
+  (+ (Math/abs x) (Math/abs y)))
 
-(defn distance-to-axis
-  [n]
-  (let [r (ring n)
-        p (position n)
-        k (inc (rem p (dec r)))
-        d (Math/abs (- (/ (dec r) 2) k))]
-    d))
+;; part 1
 
-(defn distance-to-portal
-  [n]
-  (let [r (/ (dec (ring n)) 2)
-        d (distance-to-axis n)]
-    (+ r d)))
+#_ (manhattan (locate 347991))
 
-(distance-to-portal 347991)
+;; part 2
+#_ (->> (iterate fill {:world {} :xy [0 0] :value 1})
+        (drop-while #(< (:value %) 347991))
+        (first)
+        (:value))

@@ -28,7 +28,7 @@
 (compute duplicate-free? ["aa bb cc dd aa"])
 (compute duplicate-free? ["aa bb cc dd aaa"])
 
-(def input (-> (io/resource "advent/input4.txt")
+(def input (-> (io/resource "input4.txt")
                (slurp)
                (str/split-lines)))
 

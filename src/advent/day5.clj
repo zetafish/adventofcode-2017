@@ -8,31 +8,23 @@
        (str/split-lines)
        (mapv #(Integer/parseInt %))))
 
-(defn make-stepper
-  [updater]
-  (fn [{:keys [jumps pos]}]
-    (if (or (nil? pos)
-            (neg? pos)
-            (>= pos (count jumps)))
-      nil
-      {:pos (+ pos (get jumps pos))
-       :jumps (update jumps pos updater)})))
+(defn step
+  [f {:keys [jumps pos n]}]
+  (when (and pos (>= pos 0) (< pos (count jumps)))
+    {:jumps (update jumps pos f)
+     :pos (+ pos (jumps pos))
+     :n (inc n)}))
 
-(defn make-jumper
-  [stepper]
-  (fn [jumps]
-    (->> {:jumps jumps :pos 0}
-         (iterate stepper)
-         (take-while #(not (nil? %))))))
+(defn solve
+  [f jumps]
+  (->> {:jumps jumps :pos 0 :n 0}
+       (iterate (partial step f))
+       (take-while identity)
+       (last)
+       (:n)))
 
-(defn compute
-  [jumper jumps]
-  (dec (count (jumper jumps))))
+#_ (solve f1 [0 3 0 1 -3])
+#_ (solve f1 input)
 
-#_ (-> (make-stepper inc)
-       (make-jumper)
-       (compute input))
-
-#_ (-> (make-stepper #(if (>= % 3) (dec %) (inc %)))
-       (make-jumper)
-       (compute input))
+#_ (solve f2 [0 3 0 1 -3])
+#_ (solve f2 input)

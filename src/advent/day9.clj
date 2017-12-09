@@ -6,26 +6,24 @@
                (slurp)))
 
 (defn scan
-  [{:keys [score group garbage cancel] :as state} ch]
-  (let [state2
-        (if garbage
-          (cond
-            cancel (assoc state :cancel false)
-            (= \! ch) (assoc state :cancel true)
-            (= \> ch) (assoc state :garbage false)
-            :else state)
-          (condp = ch
-            \< (assoc state :garbage true)
-            \{ (-> state
-                   (update :group inc))
-            \} (-> state
-                   (update :score + group)
-                   (update :group dec))
-            state))]
-   ;; (Printlnjack"=>" state2)
-    state2))
+  [{:keys [score group garbage cancel count] :as state} ch]
+  (if garbage
+    (cond
+      cancel (assoc state :cancel false)
+      (= \! ch) (assoc state :cancel true)
+      (= \> ch) (assoc state :garbage false)
+      :else (update state :count inc))
+    (condp = ch
+      \< (assoc state :garbage true)
+      \{ (-> state
+             (update :group inc))
+      \} (-> state
+             (update :score + group)
+             (update :group dec))
+      state)))
 
-(def seed {:score 0 :group 0 :garbage false :cancel false})
+(def seed {:score 0 :group 0
+           :garbage false :cancel false :count 0})
 
 (defn f
   [s]
@@ -43,4 +41,5 @@
 (f "{<!!>}")
 (f "{{<a!>},{<a!>},{<a!>},{<ab>}}")
 (f "{{<!>},{<!>},{<!>},{<a>}}")
+(f "<{!>}>")
 (f input)

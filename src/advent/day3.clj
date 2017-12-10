@@ -25,8 +25,6 @@
 
 ;; Part 1
 (distance-to-portal input)
-(distance-to-portal 12)
-(distance-to-portal 12345678901)
 
 
 (def dirs (cycle [[1 0] [0 1] [-1 0] [0 -1]]))
@@ -52,24 +50,18 @@
   [pos]
   (->> (for [x [-1 0 1]
              y [-1 0 1]
-             :when (not (and (zero? x) (zero? y)))] [x y])
+             :when (not= 0 x y)] [x y])
        (map #(map + % pos))))
-
-(defn count-tokens
-  [world places]
-  (->> (map world places)
-       (filter identity)
-       (reduce +)))
 
 (defn walk-spiral
   ([] (cons 1 (walk-spiral (rest (spiral)) {[0 0] 1})))
   ([spiral world]
    (let [pos (first spiral)
-         value (count-tokens world (neighbours pos))]
-     (cons value (lazy-seq (walk-spiral (rest spiral)
-                                        (assoc world pos value)))))))
+         val (reduce + (keep world (neighbours pos)))]
+     (cons val (lazy-seq (walk-spiral (rest spiral)
+                                      (assoc world pos val)))))))
 
-;; Part 2
+;; part 2
 (->> (walk-spiral)
      (drop-while #(<= % input))
      (first))

@@ -23,8 +23,16 @@
        (last)
        (:n)))
 
+(def f1 inc)
+
+;; part 1
 #_ (solve f1 [0 3 0 1 -3])
 #_ (solve f1 input)
+
+(defn f2 [v]
+  (if (>= v 3)
+    (dec v)
+    (inc v)))
 
 #_ (solve f2 [0 3 0 1 -3])
 #_ (solve f2 input)

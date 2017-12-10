@@ -16,6 +16,14 @@
   (concat (reverse (take n col))
           (drop n col)))
 
+(defn knot
+  [col pos length]
+  (->>
+    col
+    (rotate pos)
+    (twist length)
+    (rotate (- (count col) pos))))
+
 (defn knotter
   []
   (let [state (atom {:pos 0 :skip 0})]
@@ -24,10 +32,7 @@
             {:keys [pos skip]} @state]
         (reset! state {:pos (mod (+ pos length skip) k)
                        :skip (inc skip)})
-        (->> col
-             (rotate pos)
-             (twist length)
-             (rotate (- k pos)))))))
+        (knot col pos length)))))
 
 (defn part-1
   [col lengths]

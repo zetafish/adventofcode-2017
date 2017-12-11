@@ -18,17 +18,34 @@
                   :nw [-1 1] :sw [-1 -1]})]
     (mapv + pos delta)))
 
-(defn compute-1
+(defn dist
+  [[x y]]
+  (/ (+ (Math/abs x) (Math/abs y)) 2))
+
+(defn furthest
+  [p q]
+  (if (> (dist p) (dist q))
+    p
+    q))
+
+(defn step-2
+  [{:keys [pos far-away]} d]
+  (let [next-pos (step pos d)]
+    {:pos next-pos
+     :far-away (furthest far-away next-pos)}))
+
+(defn compute
   [s]
   (->>
     (parse s)
-    (reduce step [0 0])
-    (map #(Math/abs %))
-    (reduce +)
-    (* 0.5)))
+    (reduce step-2 {:pos [0 0]
+                    :far-away [0 0]})
+    (vals)
+    (map dist)))
 
-(compute-1 "ne,ne,ne")
-(compute-1 "ne,ne,sw,sw")
-(compute-1 "ne,ne,s,s")
-(compute-1 "se,sw,se,sw,sw")
-(compute-1 input)
+
+(compute "ne,ne,ne")
+(compute "ne,ne,sw,sw")
+(compute "ne,ne,s,s")
+(compute "se,sw,se,sw,sw")
+(compute input)

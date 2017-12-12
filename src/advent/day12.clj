@@ -1,17 +1,16 @@
 (ns advent.day12
-  (:require [instaparse.core :as insta]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
+            [clojure.set :as set]
             [clojure.string :as str]
-            [clojure.walk :as walk]
-            [clojure.set :as set]))
+            [instaparse.core :as insta]))
 
 (def parser
   (insta/parser
     "<S> = number <spaces arrow spaces> number (<comma spaces> number)*
-     <arrow> = '<->'
-     number = #'[0-9]+'
-     <spaces> = ' '+
-     <comma> = ','"))
+     arrow = '<->'
+     <number> = #'[0-9]+'
+     spaces = ' '+
+     comma = ','"))
 
 (def small ["0 <-> 2"
             "1 <-> 1"
@@ -25,26 +24,22 @@
                (slurp)
                (str/split-lines)))
 
-(defn parse
-  [s]
-  (->>
-    (parser s)
-    (map (comp #(Integer/parseInt %) second))))
+(defn parse-rule
+  [line]
+  (map #(Integer/parseInt %)
+       (parser line)))
 
-(defn add-link
-  [graph [x y]]
-  (-> graph
-      (update x #(set (cons y %)))
-      (update y #(set (cons x %)))))
+(defn edges
+  [[x & xs :as rule]]
+  (map vector (repeat x) xs))
 
-(defn add-rule
-  [graph [x & xs]]
-  (let [pairs (mapv #(vector x %) xs)]
-    (reduce add-link graph pairs)))
-
-(defn graph
-  [rules]
-  (reduce add-rule {} (map parse rules)))
+(defn report
+  [groups]
+  {:group-count (count groups)
+   :zero-count (->> groups
+                    (filter #(some zero? %))
+                    (first)
+                    (count))})
 
 (defn build-group
   [graph n]
@@ -66,8 +61,19 @@
                        (set/difference unseen group)))))]
     (f [] (set (keys graph)))))
 
-(build-group (graph small) 0)
-(build-group (graph input) 0)
+(defn add-edge
+  [g [a b]]
+  (-> g
+      (update a #(set (cons b %)))
+      (update b #(set (cons a %)))))
 
-(all-groups (graph small))
-(count (all-groups (graph input)))
+(defn analyze
+  [lines]
+  (let [rules (map parse-rule lines)
+        edges (mapcat edges rules)
+        graph (reduce add-edge {} edges)]
+    {:zero-count (count (build-group graph 0))
+     :group-count (count (all-groups graph))}))
+
+#_(analyze small)
+#_(analyze input)

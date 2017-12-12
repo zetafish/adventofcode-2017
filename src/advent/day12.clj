@@ -42,18 +42,32 @@
   (let [pairs (mapv #(vector x %) xs)]
     (reduce add-link graph pairs)))
 
-(def g (reduce add-rule {} (map parse small)))
-(def g (reduce add-rule {} (map parse input)))
+(defn graph
+  [rules]
+  (reduce add-rule {} (map parse rules)))
 
-(defn component-finder
-  [graph]
+(defn build-group
+  [graph n]
   (letfn [(f [seen todo]
             (if (empty? todo)
               seen
               (let [around (apply set/union (map graph todo))]
                 (recur (set/union seen around)
                        (set/difference around todo seen)))))]
-    (partial f {})))
+    (sort (f #{} [n]))))
 
-((component-finder g) [0])
-(count ((component-finder g) [0]))
+(defn all-groups
+  [graph]
+  (letfn [(f [groups unseen]
+            (if (empty? unseen)
+              groups
+              (let [group (build-group graph (first unseen))]
+                (recur (cons group groups)
+                       (set/difference unseen group)))))]
+    (f [] (set (keys graph)))))
+
+(build-group (graph small) 0)
+(build-group (graph input) 0)
+
+(all-groups (graph small))
+(count (all-groups (graph input)))

@@ -61,3 +61,7 @@
 (part-2 (range 256) (map int "1,2,3"))
 (part-2 (range 256) (map int "1,2,4"))
 (part-2 (range 256) (map int input-s))
+
+(defn knot-hash
+  [s]
+  (part-2 (range 256) (map int s)))

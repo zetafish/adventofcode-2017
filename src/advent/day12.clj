@@ -75,5 +75,5 @@
     {:zero-count (count (build-group graph 0))
      :group-count (count (all-groups graph))}))
 
-#_(analyze small)
-#_(analyze input)
+(time (analyze small))
+(time (analyze input))

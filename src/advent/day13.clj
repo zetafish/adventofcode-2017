@@ -22,46 +22,37 @@
    4 4
    6 4})
 
-(defn layer
-  [n]
-  (let [a (range n)
-        b (drop 1 (reverse (drop 1 a)))]
-    (cycle (concat a b))))
+(defn position
+  [tick layer-size]
+  (let [half-cycle (dec layer-size)
+        full-cycle (* 2 half-cycle)
+        tick (mod tick full-cycle)]
+    (if (< tick layer-size)
+      tick
+      (- full-cycle tick))))
 
-(defn make-firewall
-  [spec]
-  (->> spec
-       (mapv (fn [[k v]] [k (layer v)]))
-       (into {})))
+(defn compute
+  [firewall delay]
+  (let [hits (->> firewall
+                  (filter (fn [[k v]]
+                            (zero? (position (+ delay k) v))))
+                  (map (fn [[k v]] (* k v))))]
+    {:caught (pos? (count hits))
+     :severity (reduce + hits)}))
 
 (defn map-vals
   [f m]
-  (->> m
-       (map (juxt first (comp f second)))
-       (into {})))
+  (into {} (map (juxt first (comp f second)) m)))
 
-(defn inspect
+(defn find-sneaky-delay
   [firewall]
-  (map-vals first firewall))
+  (->> (iterate inc 0)
+       (map #(compute firewall %))
+       (take-while :caught)
+       (count)))
 
-(defn advance
-  [firewall]
-  (map-vals rest firewall))
+(compute example 0)
+(compute input 0)
 
-(defn simulate
-  [firewall]
-  (cons (inspect firewall)
-        (lazy-seq (simulate (advance firewall)))))
-
-(defn compute
-  [spec]
-  (let [firewall (make-firewall spec)
-        n (apply max (keys firewall))]
-    (->> (simulate firewall)
-         (take (inc n))
-         (map-indexed (fn [i m] [i m]))
-         (filter (fn [[i m]] (= 0 (m i))))
-         (map (fn [[i m]] (* i (spec i))))
-         (reduce +))))
-
-(compute input)
+(find-sneaky-delay example)
+(find-sneaky-delay input)

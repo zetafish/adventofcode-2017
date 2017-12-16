@@ -1,6 +1,7 @@
 (ns advent.day14
   (:require [advent.day10 :refer [knot-hash]]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.set :as set]))
 
 ;; Suddenly, a scheduled job activates the system's disk
 ;; defragmenter. Were the situation different, you might sit and watch
@@ -52,6 +53,19 @@
   [ch]
   (Integer/parseInt (str ch) 16))
 
+(defn bits
+  [ch]
+  (let [b (Integer/toString (hex ch) 2)]
+    (str/join (concat (repeat (- 4 (count b)) \0) b))))
+
+(defn knot-hash-bits
+  [s]
+  (->> (knot-hash s)
+       (map bits)
+       (str/join)
+       (map #(- (int %) (int \0)))
+       (vec)))
+
 (defn knot-hash-ones
   [s]
   (->> (knot-hash s)
@@ -66,5 +80,69 @@
        (map knot-hash-ones)
        (reduce +)))
 
-(part-1 "flqrgnkx") ;; => 8108
-(part-1 "hxtvlmkl") ;; => 8214
+(defn build-grid
+  [input]
+  (->> (range 128)
+       (map #(row input %))
+       (mapv knot-hash-bits)))
+
+(comment
+  (part-1 "flqrgnkx") ;; => 8108
+  (part-1 "hxtvlmkl")) ;; => 8214
+
+(def grid (build-grid "flqrgnkx"))
+
+(def g0(->> grid
+            (take 8)
+            (mapv #(vec (take 8 %)))))
+
+(defn around
+  [[x y] n]
+  (->> [[-1 0] [1 0] [0 1] [0 -1]]
+       (map (fn [[dx dy]] [(+ x dx) (+ y dy)]))
+       (filter (fn [[x y]]
+                 (and (<= 0 x (dec n))
+                      (<= 0 y (dec n)))))))
+
+(defn find-region
+  [grid size point]
+  (loop [region #{}
+         seen #{}
+         [p & ps] [point]]
+    (cond
+      (nil? p)
+      region
+
+      (zero? (get-in grid p))
+      (recur region (conj seen p) ps)
+
+      :else (let [qs (set/difference (set (around p size)) seen)]
+              (recur (conj region p)
+                     (set/union seen qs)
+                     (concat ps qs))))))
+
+(defn all-points
+  [size]
+  (set (for [x (range size)
+             y (range size)]
+         [x y])))
+
+(defn all-regions
+  [grid size]
+  (loop [regions []
+         unseen (all-points size)]
+    (let [unseen (set (remove #(zero? (get-in grid %)) unseen))]
+      (if (empty? unseen)
+        regions
+        (let [region (find-region grid size (first unseen))]
+          (recur (conj regions region)
+                 (set/difference unseen (set region))))))))
+
+(defn part-2
+  [input]
+  (let [grid (build-grid input)]
+    (count (all-regions grid 128))))
+
+(comment
+  (part-2 "flqrgnkx") ;; => 1242
+  (part-2 "hxtvlmkl")) ;; => 1093

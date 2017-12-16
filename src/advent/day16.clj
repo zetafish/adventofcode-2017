@@ -27,10 +27,11 @@
 
 (defn move
   [col [op x y]]
-  (condp = op
-    :s (fs x col)
-    :x (fx x y col)
-    :p (fp x y col)))
+  (str/join
+    (condp = op
+      :s (fs x col)
+      :x (fx x y col)
+      :p (fp x y col))))
 
 (defn parse-int
   [x]
@@ -46,7 +47,7 @@
 
 (def parser (insta/parser grammar))
 
-(defn parse
+(defn parse-move
   [s]
   (let [[op x y] (insta/parse parser s)]
       (condp = op
@@ -54,20 +55,39 @@
         "x" [:x (parse-int x) (parse-int y)]
         "p" [:p (first x) (first y)])))
 
-(def example "s1,x3/4,pe/b")
+(def moves-a (map parse-move (str/split "s1,x3/4,pe/b" #",")))
 
-(def input (-> "input16.txt"
-               io/resource
-               slurp
-               str/trim))
+(def moves-b (map parse-move
+                  (-> (io/resource "input16.txt")
+                      (slurp)
+                      (str/trim)
+                      (str/split #","))))
 
-(defn part1
-  [start moves]
-  (->> (str/split moves #",")
-       (map parse)
-       (reduce move start)
-       (str/join)))
+(defn dance
+  [moves start]
+  (reduce move start moves))
 
-(comment
-  (println (part1 "abcde" "s1,x3/4,pe/b"))
-  (println (part1 "abcdefghijklmnop" input)))
+;; part 1
+(dance moves-a "abcde") ;; baedc
+(dance moves-b "abcdefghijklmnop") ;; => "ebjpfdgmihonackl"
+
+(defn find-cycle-length
+  [moves start]
+  (->> (iterate (partial dance moves) start)
+       (drop 1)
+       (take-while #(not= start %))
+       (cons start)
+       (count)))
+
+(defn dance2
+  [moves start total]
+  (let [stop (reduce move start moves)
+        n (find-cycle-length moves start)]
+    (->>
+      (iterate (partial dance moves) start)
+      (drop (rem total n))
+      (first))))
+
+;; part 2
+(dance2 moves-a "abcde" (* 1000 1000 1000))
+(dance2 moves-b "abcdefghijklmnop" (* 1000 1000 1000))

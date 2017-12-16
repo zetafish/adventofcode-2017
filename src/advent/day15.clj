@@ -11,8 +11,6 @@
 
 (def magic-constant 2147483647)
 
-(def total-pairs (* 40 1000 1000))
-
 (defn generator
   [factor]
   (fn [previous]
@@ -27,26 +25,37 @@
 
 (def b (generator 48271))
 
-;; My input:
-;;
-;; Generator A starts with 512
-;; Generator B starts with 191
-
-(defn suffixes
-  [f seed]
-  (->> (iterate f seed)
-       (map last-16-bits)))
-
-
-(defn part-1
-  [init-a init-b pairs]
+(defn gen
+  [g seed divisor]
   (->>
-    (map vector (suffixes a init-a) (suffixes b init-b))
+    (iterate g seed)
     (drop 1)
-    (take pairs)
-    (filter (fn [[x y]] (= x y)))
-    (count)))
+    (filter #(zero? (mod % divisor)))
+    (map last-16-bits)))
 
+(defn compute
+  [c1 c2 pairs]
+  (->> (map vector c1 c2)
+       (take pairs)
+       (filter (fn [[x y]] (= x y)))
+       (count)))
+
+;; Part 1
 (comment
-  (part-1 65 8921 10)
-  (part-1 512 191 (* 40 1000 1000)))    ; => 567
+  (compute (gen a 65 1)
+           (gen b 8921 1)
+           10)
+
+  (compute (gen a 512 1)
+           (gen b 191 1)
+           (* 40 1000 1000))) ;; => 567
+
+;; Part 2
+(comment
+  (compute (gen a 65 4)
+           (gen b 8921 8)
+           (* 5 1000 1000))
+
+  (compute (gen a 512 4)
+           (gen b 191 8)
+           (* 5 1000 1000))) ;; => 323

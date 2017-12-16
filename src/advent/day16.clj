@@ -71,20 +71,21 @@
 (dance moves-a "abcde") ;; baedc
 (dance moves-b "abcdefghijklmnop") ;; => "ebjpfdgmihonackl"
 
-(defn find-cycle-length
+(defn find-cycle
   [moves start]
-  (->> (iterate (partial dance moves) start)
-       (drop 1)
-       (take-while #(not= start %))
-       (cons start)
-       (count)))
+  (->>
+    (iterate (partial dance moves) start)
+    (drop 1)
+    (take-while #(not= start %))
+    (cons start)))
 
 (defn dance2
   [moves start total]
   (let [stop (reduce move start moves)
-        n (find-cycle-length moves start)]
+        cycle (find-cycle moves start)
+        n (count cycle)]
     (->>
-      (iterate (partial dance moves) start)
+      cycle
       (drop (rem total n))
       (first))))
 

@@ -1,22 +1,19 @@
 (ns advent.day17)
 
 (defn spinlock
-  [step {:keys [buffer value pos]}]
-  (let [next-pos (inc (rem (+ step pos) value))
+  [step {:keys [buffer pos]}]
+  (let [n (count buffer)
+        next-pos (inc (rem (+ step pos) n))
         [x y] (split-at next-pos buffer)]
-    {:buffer (doall (concat x [value] y))
-     :value (inc value)
+    {:buffer (doall (concat x [n] y))
      :pos next-pos}))
 
-(def seed {:buffer (list 0)
-           :pos 0
-           :value 1})
-
-(defn after-2017
+(defn part1
   [step]
-  (let [state (->> (iterate (partial spinlock step) seed)
-                   (drop 2017)
-                   (first))]
-    (nth (:buffer state) (inc (:pos state)))))
+  (let [{:keys [buffer pos] :as state}
+        (->> (iterate (partial spinlock step) {:buffer [0] :pos 0})
+             (drop 2017)
+             (first))]
+    (nth buffer (inc pos))))
 
-(after-2017 366)
+(part1 366)

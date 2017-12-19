@@ -17,13 +17,15 @@
   rcv = <'rcv'> <ws> var
   jgz = <'jgz'> <ws> (var | num) <ws> (var | num)")
 
-(def parser (insta/parser grammar))
-
-(def parse (partial insta/parse parser))
+(def transform-options
+  {:S vec
+   :num read-string
+   :var keyword})
 
 (defn parse
   [s]
-  (second (insta/parse parser s)))
+  (->> (insta/parse parser s)
+       (insta/transform transform-options)))
 
 (def example
   (mapv parse ["set a 1"
@@ -43,11 +45,10 @@
                   (str/split-lines))))
 
 (defn value-of
-  [state [t v]]
-  (condp = t
-    :num (Integer/parseInt v)
-    :var (state v 0)
-    nil))
+  [m x]
+  (if (keyword? x)
+    (m x 0)
+    x))
 
 (defn jump
   ([state] (update state :ip inc))
@@ -63,14 +64,14 @@
   [program state]
   (cond (< (:ip state) 0) nil
         (>= (:ip state) (count program)) nil
-        :else (let [[op [_ k :as a1] a2] (program (:ip state))
-                    x (value-of state a1)
-                    y (value-of state a2)]
+        :else (let [[op a b] (program (:ip state))
+                    x (value-of state a)
+                    y (value-of state b)]
                 (condp = op
-                  :set (-> state (assoc k y) (jump))
-                  :add (-> state (assoc k (+ x y)) (jump))
-                  :mul (-> state (assoc k (* x y)) (jump))
-                  :mod (-> state (assoc k (rem x y)) (jump))
+                  :set (-> state (assoc a y) (jump))
+                  :add (-> state (assoc a (+ x y)) (jump))
+                  :mul (-> state (assoc a (* x y)) (jump))
+                  :mod (-> state (assoc a (rem x y)) (jump))
                   :snd (-> state (assoc :snd x) (jump))
                   :rcv (-> state (rcv x) (jump))
                   :jgz (-> state (jump (if (pos? x) y 1)))))))

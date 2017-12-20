@@ -72,21 +72,21 @@
             (when from
               (lazy-seq
                 (let [[from2 dir2] (step grid from dir)]
-                  (cons [(tr (cell grid from)) from dir ]
+                  (cons (tr (cell grid from))
                         (aux from2 dir2))))))]
     (aux (start grid) [0 1])))
 
-(defn read-trail
+(defn collect-tokens
   [trail]
   (->> trail
        (map first)
        (filter token?)
        (str/join)))
 
-(defn part-1
-  [grid]
-  (->> grid
-       travel
-       read-trail))
+;; part 1
+(->> small travel collect-tokens)
+(->> input travel collect-tokens)
 
-(part-1 input)
+;; part 2
+(->> small travel count)
+(->> input travel count)

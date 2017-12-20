@@ -4,30 +4,38 @@
             [clojure.string :as str]
             [instaparse.core :as insta]))
 
-(def parser
-  (insta/parser
-    "<S> = number <spaces arrow spaces> number (<comma spaces> number)*
-     arrow = '<->'
-     <number> = #'[0-9]+'
-     spaces = ' '+
-     comma = ','"))
+(def grammar
+  "S = number <spaces arrow spaces> number (<comma spaces> number)*
+   arrow = '<->'
+   number = #'[0-9]+'
+   spaces = ' '+
+   comma = ','")
 
-(def small ["0 <-> 2"
-            "1 <-> 1"
-            "2 <-> 0, 3, 4"
-            "3 <-> 2, 4"
-            "4 <-> 2, 3, 6"
-            "5 <-> 6"
-            "6 <-> 4, 5"])
+(def parser (insta/parser grammar))
 
-(def input (-> (io/resource "input12.txt")
-               (slurp)
-               (str/split-lines)))
+(def transform-options
+  {:S vector
+   :number read-string
+   :var keyword})
 
-(defn parse-rule
-  [line]
-  (map #(Integer/parseInt %)
-       (parser line)))
+(defn parse
+  [s]
+  (->> (insta/parse parser s)
+       (insta/transform transform-options)))
+
+(def small (mapv parse
+                 ["0 <-> 2"
+                  "1 <-> 1"
+                  "2 <-> 0, 3, 4"
+                  "3 <-> 2, 4"
+                  "4 <-> 2, 3, 6"
+                  "5 <-> 6"
+                  "6 <-> 4, 5"]))
+
+(def input (mapv parse
+                 (-> (io/resource "input12.txt")
+                     (slurp)
+                     (str/split-lines))))
 
 (defn edges
   [[x & xs :as rule]]
@@ -68,9 +76,8 @@
       (update b #(set (cons a %)))))
 
 (defn analyze
-  [lines]
-  (let [rules (map parse-rule lines)
-        edges (mapcat edges rules)
+  [rules]
+  (let [edges (mapcat edges rules)
         graph (reduce add-edge {} edges)]
     {:zero-count (count (build-group graph 0))
      :group-count (count (all-groups graph))}))

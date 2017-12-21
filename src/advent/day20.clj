@@ -21,21 +21,30 @@
    :a vector
    :num read-string})
 
+(defn manhattan
+  [p]
+  (reduce + (map #(Math/abs %) p)))
+
 (defn parse
   [s]
-  (->> (insta/parse (insta/parser grammar) s)
-       (insta/transform transform-options)))
+  (let [[p v a]
+        (->> (insta/parse (insta/parser grammar) s)
+             (insta/transform transform-options))]
+    {:p p :v v :a a}))
+
+(defn add-distance
+  [m]
+  (assoc m :d (manhattan (:p m))))
 
 (defn parse-items
   [lines]
-  (->> (mapv parse lines)
-       (map-indexed vector)
-       (vec)))
+  (->> (map parse lines)
+       (map add-distance)
+       (map-indexed (fn [i m] (assoc m :num i)))))
 
 (def sample
   (parse-items ["p=<3,0,0>, v=<2,0,0>, a=<-1,0,0>"
                 "p=<4,0,0>, v=<0,0,0>, a=<-2,0,0>"]))
-
 
 (def input
   (parse-items (-> (io/resource "input20.txt")
@@ -43,35 +52,46 @@
                    (str/split-lines))))
 
 (defn tick
-  [[p v a]]
-  [(mapv + p v a)
-   (mapv + v a)
-   a])
+  [{:keys [p v a] :as m}]
+  (let [v (mapv + v a)
+        p (mapv + v p)
+        d (manhattan p)]
+    (assoc m :p p :v v :d d)))
 
-(defn manhattan
-  [p]
-  (reduce + (map #(Math/abs %) p)))
-
-(defn trajectory
-  [particle n]
-  (->> (iterate tick particle)
-       (map (comp manhattan first))
-       (drop n)
-       (first)))
+(defn remove-collissions
+  [col]
+  (->> (sort-by :p col)
+       (partition-by :p)
+       (remove #(> (count %) 1))
+       (apply concat)))
 
 (defn simulate
-  [particles]
+  [particles resolver]
   (letfn [(f [col]
-            (lazy-seq
-              (cons (sort-by (comp manhattan first second) col)
-                    (f (map (fn [[i obj]] [i (tick obj)]) col)))))]
+            (let [col (resolver col)
+                  col (sort-by :d col)]
+              (lazy-seq
+                (cons col
+                      (f (map tick col))))))]
     (f particles)))
 
+;; part-1
+(comment
 
-(def simulation (simulate input))
+  (def sim1 (simulate input identity))
 
-;; Brute forcing
-#_(->> simulation
-     (map (comp first first))
-     (drop 402)
-     (take 10))
+  (->> sim1
+       (map (comp :num first))
+       (drop 400)
+       (take 10)))
+
+
+;; part 2
+(comment
+
+  (def sim2 (simulate input remove-collissions))
+
+  (->> sim2
+       (drop 500)
+       (first)
+       (count)))

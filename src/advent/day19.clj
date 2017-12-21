@@ -72,7 +72,7 @@
             (when from
               (lazy-seq
                 (let [[from2 dir2] (step grid from dir)]
-                  (cons (tr (cell grid from))
+                  (cons (str (cell grid from))
                         (aux from2 dir2))))))]
     (aux (start grid) [0 1])))
 

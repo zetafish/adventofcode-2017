@@ -24,12 +24,14 @@
       4 (partition 2 g)
       9 (partition 3 g))))
 
-(defn patterns
+(defn patterns-0
   [g]
   (let [g (seq g)]
     (distinct
       (concat (take 4 (iterate rot g))
               (take 4 (iterate rot (flip g)))))))
+
+(def patterns (memoize patterns-0))
 
 (defn parse-term
   [s]
@@ -40,13 +42,6 @@
   (let [[l r] (str/split s #" => ")]
     {:input (parse-term l)
      :output (parse-term r)}))
-
-(defn enhance
-  [rule-book image]
-  (first (for [p (patterns image)
-               r rule-book
-               :when (= (:input r) p)]
-           (:output r))))
 
 (defn sqrt
   [n]
@@ -79,6 +74,14 @@
          (mapcat #(apply interleave %))
          (apply concat))))
 
+(defn enhance-0
+  [rule-book image]
+  (->> (patterns image)
+       (keep rule-book)
+       (first)))
+
+(def enhance (memoize enhance-0))
+
 (defn generate
   [rule-book image]
   (->> (split-image image)
@@ -101,18 +104,18 @@
 
 (def seed (parse-term ".#./..#/###"))
 
-(def rule-book
-  (mapv parse-rule ["../.# => ##./#../..."
-                    ".#./..#/### => #..#/..../..../#..#"]))
+(def rule-book (->> (-> (io/resource "input21.txt")
+                        (slurp)
+                        (str/split-lines))
+                    (map parse-rule)
+                    (map (juxt :input :output))
+                    (into {})))
 
-(def rule-book (map parse-rule (-> (io/resource "input21.txt")
-                                   (slurp)
-                                   (str/split-lines))))
-
-(->> (iterate (partial generate rule-book) seed)
-     (drop 5)
-     (first)
-     (count-pixels-on))
+;; Slow
+(time (->> (iterate (partial generate rule-book) seed)
+           (drop 18)
+           (first)
+           (count-pixels-on)))
 
 
 (defn show

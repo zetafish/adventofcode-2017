@@ -1,4 +1,5 @@
-(ns advent.day17)
+(ns advent.day17
+  (:require [clojure.string :as str]))
 
 (defn spinlock
   [step {:keys [buffer pos]}]
@@ -16,4 +17,20 @@
              (first))]
     (nth buffer (inc pos))))
 
+(defn spinlock2
+  [step {:keys [size pos at-one]}]
+  (let [next-pos (inc (rem (+ step pos) size))]
+    {:size (inc size)
+     :pos next-pos
+     :at-one (if (= 1 next-pos) size at-one)}))
+
+(defn part2
+  [step]
+  (->> {:size 1 :pos 0}
+       (iterate (partial spinlock2 step))
+       (drop 50000000)
+       (first)
+       :at-one))
+
 (part1 366)
+(part2 366)

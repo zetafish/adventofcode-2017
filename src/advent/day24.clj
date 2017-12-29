@@ -57,6 +57,14 @@
      (map (comp strength :chain))
      (reduce max))
 
-(->> (generate input [{:port 0}])
-     (map (comp strength :chain))
-     (reduce max))
+(def bridges
+  (->> (generate input [{:port 0}])
+       (map :chain)))
+
+(count bridges)
+
+(->> bridges
+     (map (juxt count strength))
+     (sort)
+     (reverse)
+     (take 10))

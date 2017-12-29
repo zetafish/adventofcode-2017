@@ -40,12 +40,6 @@
        (map #(hash-map :port (connect port %)
                        :chain (cons % chain)))))
 
-(defn expand-all
-  [available bridges]
-  (mapcat #(expand available %) bridges))
-
-(expand-all sample [{:port 22} {:port 0}])
-
 (defn generate
   [available from]
   (let [expansion (mapcat #(expand available %) from)]
@@ -61,7 +55,6 @@
   (->> (generate input [{:port 0}])
        (map :chain)))
 
-(count bridges)
 
 (->> bridges
      (map (juxt count strength))
